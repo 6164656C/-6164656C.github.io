@@ -1,0 +1,105 @@
+<h3>IKE Phase 1</h3>
+<p style="text-align:justify;">In IKE Phase 1 a tunnel is created used to protect IPSec management traffic. This tunnel is bidirectional. Three steps are needed to create this tunnel.</p>
+<h4>Step 1: Negotiate the IKE Phase 1 Tunnel</h4>
+<p style="text-align:justify;">The two routers negotiate the Internet Key Exchange (IKEv1) Phase 1 tunnel. This can be done in one of the two modes, <u>Main mode</u> or <u>Aggreessive Mode</u>. Main mode is more secure than the Aggressive Mode, Main mode uses more packets than the Aggressive mode. Most current VPNs use by default the Main mode.</p>
+<p style="text-align:justify;">Five basic items (HAGEL) need to be agreed upon between the two VPN gateways for the IKE Phase 1 tunnel to succeed, as follows.</p>
+<ul>
+  <li>H: Hash algorithm</li>
+  <li>A: Authentication method</li>
+  <li>G: Diffie-Hellman(DH) group</li>
+  <li>E: Encryption algorithm</li>
+  <li>L:Lifetime</li>
+</ul>
+<h4>Step 2: Diffie-Hellman(DH) Exchange</h4>
+<p styel="text-align:justify;">Establish shared secret keying material through unsecured network/connection.</p>
+<h4>Step 3: Authenticate the peer</h4>
+<h3>IKE Phase 2</h3>
+<p style="text-align:justify;">After the tunnel of the IKE Phase 1 is established, the gateways immediately begin to establish IKE Phase 2 tunnel using this the IKE Phase 1 tunnel during the negociation. The name of the mode for building IKE Pjase2 tunnel is called <u>Quick mode</u>. The IKE Phase 2 tunnel is used to send encrypted users data. IKE
+Phase 2 tunnel creates two one-way(unidirectional), these tunnels are often reffered to Security Aggrement or Security Associations (SA). Each SA is aasigned a unique number for tracking.</p>
+
+<pre>
+R1#
+R1#configure terminal
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#interface FastEthernet0/0
+R1(config-if)#ip address 50.0.0.1 255.255.255.252
+R1(config-if)#no shutdown
+R1(config-if)#exit
+*Mar  1 00:18:26.951: %LINK-3-UPDOWN: Interface FastEthernet0/0, changed state to up
+*Mar  1 00:18:27.951: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/0, changed state to up
+R1(config)#interface FastEthernet 0/1
+R1(config-if)#ip address 192.168.5.254 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#exit
+*Mar  1 00:19:56.771: %LINK-3-UPDOWN: Interface FastEthernet0/1, changed state to up
+*Mar  1 00:19:57.771: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/1, changed state to up
+R1(config)#hostname westnode
+westnode(config)#ip domain-name adminlabs.local
+westnode(config)#crypto isakmp policy 1 
+westnode(config-isakmp)#encryption 3des 
+westnode(config-isakmp)#hash sha
+westnode(config-isakmp)#group 5
+westnode(config-isakmp)#authentication pre-share
+westnode(config-isakmp)#lifetime 3600
+westnode(config-isakmp)#exit
+westnode(config)#crypto isakmp key 0 IPSECISAKMPKEY address 70.0.0.1 
+westnode(config)#access-list 100 permit ip 192.168.5.0 0.0.0.255 192.168.7.0 0.0.0.255 
+westnode(config)#crypto ipsec transform-set westnode-to-eastnode_ts esp-3des esp-sha-hmac 
+westnode(cfg-crypto-trans)#mode tunnel 
+westnode(cfg-crypto-trans)#exit
+westnode(config)#crypto map westnode_to_eastnode_map 1 ipsec-isakmp 
+% NOTE: This new crypto map will remain disabled until a peer
+	and a valid access list have been configured.
+westnode(config-crypto-map)#match address 100
+westnode(config-crypto-map)#set transform-set westnode-to-eastnode_ts
+westnode(config-crypto-map)#set peer 70.0.0.1  
+westnode(config-crypto-map)#exit
+westnode(config)#interface FastEthernet 0/0
+westnode(config-if)#crypto map westnode_to_eastnode_map 
+*Mar  1 03:39:08.183: %CRYPTO-6-ISAKMP_ON_OFF: ISAKMP is ON
+westnode(config-if)#exit
+westnode(config)#ip route 0.0.0.0 0.0.0.0 FastEthernet 0/0 50.0.0.2
+</pre>
+
+<pre>R2#configure terminal
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#interface FastEthernet0/0
+R2(config-if)#ip address 70.0.0.1 255.255.255.252
+R2(config-if)#no shutdown
+R2(config-if)#exit
+R2(config)#interface FastEthernet 0/1
+R2(config-if)#ip address 192.168.7.254 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#exit
+R2(config)#hostname westnode
+westnode(config)#ip domain-name adminlabs.local
+westnode(config)#crypto isakmp policy 1 
+westnode(config-isakmp)#encryption 3des 
+westnode(config-isakmp)#hash sha
+westnode(config-isakmp)#group 5
+westnode(config-isakmp)#authentication pre-share
+westnode(config-isakmp)#lifetime 3600
+westnode(config-isakmp)#exit
+westnode(config)#crypto isakmp key 0 IPSECISAKMPKEY address 50.0.0.1 
+westnode(config)#access-list 100 permit ip 192.168.7.0 0.0.0.255 192.168.5.0 0.0.0.255 
+westnode(config)#$c transform-set eastnode-to-wtnode-to-westnode_ts esp-3des 
+*Mar  1 00:00:51.647: %LINK-3-UPDOWN: Interface FastEthernet0/0, changed state to up
+*Mar  1 00:00:52.019: %LINK-3-UPDOWN: Interface FastEthernet0/1, changed state to up
+*Mar  1 00:00:52.647: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthm-set eastnode-to-westnode_ts esp-3des esp-sha-hmac        
+westnode(cfg-crypto-trans)#mode tunnel 
+westnode(cfg-crypto-trans)#exit
+westnode(config)#crypto map eastnode_to_westnode_map 1 ipsec-isakmp 
+% NOTE: This new crypto map will remain disabled until a peer
+	and a valid access list have been configured.
+westnode(config-crypto-map)#match address 100
+westnode(config-crypto-map)#set transform-set eastnode-to-westnode_ts
+westnode(config-crypto-map)#set peer 50.0.0.1  
+westnode(config-crypto-map)#exit
+westnode(config)#interface FastEthernet 0/0
+westnode(config-if)#crypto map eastnode_to_westnode_map 
+westnode(config-if)#exit
+*Mar  1 00:00:53.019: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/1, changed state to up
+	
+westnode(config)#ip route 0.0.0.0 0.0.0.0 FastEthernet 0/0 70.0.0.2
+westnode(config)#
+</pre>
