@@ -1,0 +1,40 @@
+Key Server:
+crypto isakmp policy 10
+ encr aes 256
+ hash sha512
+ authentication pre-share
+ group 16
+ lifetime 3600
+crypto isakmp key GETVPNKEY address 172.16.10.2    
+crypto isakmp key GETVPNKEY address 172.16.20.2    
+crypto ipsec transform-set transform-set_1 esp-aes esp-sha512-hmac 
+crypto ipsec profile profile_1
+ set security-association lifetime seconds 7200
+ set transform-set transform-set_1 
+crypto gdoi group group_5
+ identity number 5
+ server local
+  rekey retransmit 10 number 2
+  rekey authentication mypubkey rsa GETVPNKEY
+  rekey transport unicast
+  sa ipsec 1
+   profile profile_1
+   match address ipv4 101
+   replay counter window-size 512
+  address ipv4 172.16.5.1
+access-list 101 permit ip 10.1.1.0 0.0.0.255 10.2.2.0 0.0.0.255
+access-list 101 permit ip 10.2.2.0 0.0.0.255 10.1.1.0 0.0.0.255
+
+Group Member:
+crypto isakmp policy 10
+ encr aes 256
+ hash sha512
+ authentication pre-share
+ group 16
+ lifetime 3600
+crypto isakmp key GETVPNKEY address 172.16.5.1     
+crypto gdoi group group_5
+ identity number 5
+ server address ipv4 172.16.5.1
+crypto map getvpn_map 10 gdoi 
+ set group group_5
