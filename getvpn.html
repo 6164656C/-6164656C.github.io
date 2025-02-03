@@ -1,4 +1,5 @@
 Key Server:
+<pre>
 crypto isakmp policy 10
  encr aes 256
  hash sha512
@@ -24,8 +25,9 @@ crypto gdoi group group_5
   address ipv4 172.16.5.1
 access-list 101 permit ip 10.1.1.0 0.0.0.255 10.2.2.0 0.0.0.255
 access-list 101 permit ip 10.2.2.0 0.0.0.255 10.1.1.0 0.0.0.255
-
+</pre>
 Group Member:
+<pre>
 crypto isakmp policy 10
  encr aes 256
  hash sha512
@@ -38,3 +40,4 @@ crypto gdoi group group_5
  server address ipv4 172.16.5.1
 crypto map getvpn_map 10 gdoi 
  set group group_5
+</pre>
